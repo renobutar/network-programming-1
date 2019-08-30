@@ -1,6 +1,22 @@
 ## 1. TCP Connection
 
-Diagram TCP finite state machine merupakan diagram yang menjelaskan alur terjadinya three way handshake pada saat pembuatan koneksi TCP. Starting point berada pada state CLOSED ketika belum ada koneksi. 
+Diagram TCP finite state machine merupakan diagram yang menjelaskan alur terjadinya three way handshake pada saat pembuatan koneksi TCP. Starting point berada pada state CLOSED ketika belum ada koneksi.
+
+### Client
+1. Client mengirim SYN (SYN SENT)
+2. Client menerima SYN dan ACK, kemudian mengirim ACK (CONNECTION ESTABLISHED)
+3. Client mengirimkan FIN (FIN WAIT 1)
+4. Client menerima ACK (FIN WAIT 2) 
+5. Client menerima FIN dan mengirim ACK (TIME WAIT)
+6. Terjadi timeout, maka koneksi berakhir (CLOSED)
+
+### Server
+1. Server membuat koneksi secara passive open (LISTEN)
+2. Server menerima SYN, kemudian mengirim SYN, ACK (SYN RCVD)
+3. Server menerima ACK (CONNECTION ESTABLISHED)
+4. Server menerima FIN, kemudian mengirimkan ACK (CLOSE WAIT)
+5. Server mengirim FIN (LAST ACK)
+6. Server mengakhiri koneksi (CLOSED)
 
 ## 2. For
 
@@ -316,3 +332,69 @@ func main() {
 ### Hasil Program
 ![for](https://raw.githubusercontent.com/adityaeka26/network-programming-1/master/Screenshot/web-application.png)
 
+
+
+## 7. Simple Web Application using Config (Viper)
+
+### Kode Program
+````go
+package main
+
+import (
+	"fmt"
+    "html"
+    "github.com/spf13/viper"
+    "net/http"
+)
+
+func main() {
+	// Set lokasi file config
+	viper.SetConfigFile("./config/env.json")
+	
+	// Tampilkan error jika file config tidak ditemukan
+	if err := viper.ReadInConfig(); err != nil {
+		fmt.Println("Error reading config file, %s", err)
+	}
+	
+	// Set route dan konten ketika web diakses
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "Hello, you've requested: %q", html.EscapeString(r.URL.Path))
+	})
+
+	// Jalankan server di port yang sudah di-set config
+	http.ListenAndServe(":" + viper.GetString("server.port"), nil)
+}
+````
+
+Untuk membuat config dengan library viper, pertama-tama harus menginstal library tersebut pada Go dengan cara menuliskan perintah berikut pada terminal
+````
+go get -u github.com/spf13/viper
+````
+Jika sudah terinstal, import library viper pada file .go kita
+````go
+import (
+    "github.com/spf13/viper"
+)
+````
+Setelah di-import, buat file config dengan format .json
+````json
+{
+    "appName": "Web Application",
+
+    "server": {
+        "port": 8000
+    }
+}
+````
+Definisikan lokasi file config yang sudah dibuat dengan perintah ````viper.SetConfigFile````
+````go
+viper.SetConfigFile("./config/env.json")
+````
+Untuk mengambil nilai dari file config, gunakan perintah ````viper.GetString````
+````go
+viper.GetString("server.port")
+````
+
+
+### Hasil Program
+![for](https://raw.githubusercontent.com/adityaeka26/network-programming-1/master/Screenshot/web-application-viper.png)
